@@ -1,3 +1,8 @@
 from django.contrib import admin
+from .models import Category, Size, Product, \
+    ProductImage, ProductSize
 
-# Register your models here.
+
+class ProductImageInline(admin.TabularInline):
+    model = ProductImage(admin.TabularInline)
+    extra = ProductImage
