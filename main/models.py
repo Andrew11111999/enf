@@ -1,5 +1,3 @@
-from tkinter.constants import CASCADE
-
 from django.db import models
 from django.utils.text import slugify
 
@@ -8,10 +6,12 @@ class Category(models.Model):
     name = models.CharField(max_length=100)
     slug = models.CharField(max_length=100, unique=True)
 
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
+
 
     def __str__(self):
         return self.name
@@ -20,13 +20,14 @@ class Category(models.Model):
 class Size(models.Model):
     name = models.CharField(max_length=20)
 
+
     def __str__(self):
         return self.name
 
 
 class ProductSize(models.Model):
     product = models.ForeignKey('Product', on_delete=models.CASCADE,
-                                related_name='product_size')
+                                related_name='product_sizes')
     size = models.ForeignKey(Size, on_delete=models.CASCADE)
     stock = models.PositiveIntegerField(default=0)
 
@@ -46,10 +47,13 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
+
 
     def __str__(self):
         return self.name
