@@ -9,13 +9,11 @@ from django.db.models import Q
 class IndexView(TemplateView):
     template_name = 'main/base.html'
 
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['categories'] = Category.objects.all()
         context['current_category'] = None
         return context
-
 
     def get(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -34,7 +32,6 @@ class CatalogView(TemplateView):
         'size': lambda queryset, value: queryset.filter(product_sizes__size__name=value),
     }
 
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         category_slug = kwargs.get('category_slug')
@@ -49,7 +46,7 @@ class CatalogView(TemplateView):
         query = self.request.GET.get('q')
         if query:
             products = products.filter(
-                Q(name_icontains=query) | Q(description_icontains=query)
+                Q(name__icontains=query) | Q(description__icontains=query)
             )
 
         filter_params = {}
@@ -79,7 +76,6 @@ class CatalogView(TemplateView):
 
         return context
 
-
     def get(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         if request.headers.get('HX-Request'):
@@ -89,15 +85,14 @@ class CatalogView(TemplateView):
                 return TemplateResponse(request, 'main/search_button.html', {})
             template = 'main/filter_modal.html' if request.GET.get('show_filters') == 'true' else 'main/catalog.html'
             return TemplateResponse(request, template, context)
-        return TemplateResponse(request, self.template_name, context)
+        return TemplateResponse(request, self.template, context)
 
 
 class ProductDetailView(DetailView):
     model = Product
-    template_name = 'main/base/html'
+    template_name = 'main/base.html'
     slug_field = 'slug'
     slug_url_kwarg = 'slug'
-
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -109,10 +104,9 @@ class ProductDetailView(DetailView):
         context['current_category'] = product.category.slug
         return context
 
-
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
         context = self.get_context_data(**kwargs)
         if request.headers.get('HX-Request'):
             return TemplateResponse(request, 'main/product_detail.html', context)
-        raise TemplateResponse(request, self.template_name, context)
+        return TemplateResponse(request, self.template_name, context)
