@@ -1,5 +1,3 @@
-from venv import create
-
 from django.utils.deprecation import MiddlewareMixin
 from .models import Cart
 
