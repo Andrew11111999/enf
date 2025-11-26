@@ -1,4 +1,5 @@
 from itertools import product
+from statistics import quantiles
 from venv import create
 
 from django.shortcuts import get_object_or_404, redirect
@@ -54,3 +55,27 @@ class AddToCartView(CartMixin, View):
                 id=size_id,
                 product=product
             )
+        else:
+            product_size = product.product_sizes.filter(stock_gt=0).first()
+            if not product_size:
+                return JsonResponse({
+                    'error': 'No sizes available'
+                }, status=400)
+
+        quantity = form.cleaned_data['quantity']
+        if product_size.stock < quantity:
+            return JsonResponse({
+                'error': f'Only {product_size.stock} item available'
+            }, status=400)
+
+        existing_item = cart.items.filter(
+            product=product,
+            product_size=product_size,
+        ).first()
+
+        if existing_item:
+            total_quantity = existing_item.quantity + quantity
+            if total_quantity > product_size.stock:
+                return JsonResponse({
+                    'error': f"Cannot add {quantity} items. Only {product_size.stock - existing_item.quantity} more available."
+                })
