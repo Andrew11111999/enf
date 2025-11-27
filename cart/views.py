@@ -78,4 +78,46 @@ class AddToCartView(CartMixin, View):
             if total_quantity > product_size.stock:
                 return JsonResponse({
                     'error': f"Cannot add {quantity} items. Only {product_size.stock - existing_item.quantity} more available."
-                })
+                }, status=400)
+
+        cart_item = cart.add_product(product, product_size, quantity)
+
+        request.session['cart_id'] = cart.id
+        request.session.modified = True
+
+        if request.headers.get('HX-Request'):
+            return redirect('cart:cart_modal')
+        else:
+            return JsonResponse({
+                'success': True,
+                'total_items': cart.total_items,
+                'message': f'{product.name} added to cart',
+                'cart_item_id': cart_item.id
+            })
+
+
+class UpdateCartItemView(CartMixin, View):
+    @transaction.atomic
+    def post(self, request, item_id):
+        cart = self.get_cart(request)
+        cart_item = get_object_or_404(CartItem, id=item_id, cart=cart)
+
+        quantity = int(request.POST.get('quantity', 1))
+
+        if quantity < 0:
+            return JsonResponse({'error': 'Invalid quantity'}, status=400)
+
+        if quantity == 0:
+            cart_item.delete()
+        else:
+            if quantity > cart_item.product_size.stock:
+                return JsonResponse({
+                    'error': f'Only {cart_item.product_size.stock} items available'
+                }, status=400)
+
+            cart_item.quantity = quantity
+            cart_item.save()
+
+        request.session['cart_id'] = cart.id
+        request.session.modified = True
+
