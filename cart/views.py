@@ -1,20 +1,13 @@
-from itertools import product
-from statistics import quantiles
-from venv import create
-
 from django.shortcuts import get_object_or_404, redirect
-from django.template.context_processors import request
 from django.views.generic import View
 from django.http import JsonResponse, HttpResponse
 from django.template.response import TemplateResponse
 from django.contrib import messages
 from django.db import transaction
-from main.models import Cart, CartItem
+from main.models import Product, ProductSize
 from .models import Cart, CartItem
-from .forms import AddToCartForm, UpdateCartItemForm
+from .forms import AddToCartForm
 import json
-
-from ..main.models import Product, ProductSize
 
 
 class CartMixin:
@@ -34,6 +27,19 @@ class CartMixin:
         return cart
 
 
+class CartModalView(CartMixin, View):
+    def get(self, request):
+        cart = self.get_cart(request)
+        context = {
+            'cart': cart,
+            'cart_items': cart.items.select_related(
+                'product',
+                'product_size__size'
+            ).order_by('-added_at')
+        }
+        return TemplateResponse(request, 'cart/cart_modal.html', context)
+
+
 class AddToCartView(CartMixin, View):
     @transaction.atomic
     def post(self, request, slug):
@@ -44,7 +50,7 @@ class AddToCartView(CartMixin, View):
 
         if not form.is_valid():
             return JsonResponse({
-                'error': 'Invalud form data',
+                'error': 'Invalid form data',
                 'errors': form.errors,
             }, status=400)
 
@@ -56,7 +62,7 @@ class AddToCartView(CartMixin, View):
                 product=product
             )
         else:
-            product_size = product.product_sizes.filter(stock_gt=0).first()
+            product_size = product.product_sizes.filter(stock__gt=0).first()
             if not product_size:
                 return JsonResponse({
                     'error': 'No sizes available'
@@ -65,7 +71,7 @@ class AddToCartView(CartMixin, View):
         quantity = form.cleaned_data['quantity']
         if product_size.stock < quantity:
             return JsonResponse({
-                'error': f'Only {product_size.stock} item available'
+                'error': f'Only {product_size.stock} items available'
             }, status=400)
 
         existing_item = cart.items.filter(
@@ -91,7 +97,7 @@ class AddToCartView(CartMixin, View):
             return JsonResponse({
                 'success': True,
                 'total_items': cart.total_items,
-                'message': f'{product.name} added to cart',
+                'message': f"{product.name} added to cart",
                 'cart_item_id': cart_item.id
             })
 
@@ -121,3 +127,48 @@ class UpdateCartItemView(CartMixin, View):
         request.session['cart_id'] = cart.id
         request.session.modified = True
 
+        context = {
+            'cart': cart,
+            'cart_items': cart.items.select_related(
+                'product',
+                'product_size__size',
+            ).order_by('-added_at')
+        }
+        return TemplateResponse(request, 'cart/cart_modal.html', context)
+
+
+class RemoveCartItemView(CartMixin, View):
+    def post(self, request, item_id):
+        cart = self.get_cart(request)
+
+        try:
+            cart_item = cart.items.get(id=item_id)
+            cart_item.delete()
+
+            request.session['cart_id'] = cart.id
+            request.session.modified = True
+
+            context = {
+                'cart': cart,
+                'cart_items': cart.items.select_related(
+                    'product',
+                    'product_size__size',
+                ).order_by('-added_at')
+            }
+            return TemplateResponse(request, 'cart/cart_modal.html', context)
+        except CartItem.DoesNotExist:
+            return JsonResponse({'error': 'Item not found'}, status=400)
+
+
+class CartCountView(CartMixin, View):
+    def get(self, request):
+        cart = self.get_cart(request)
+        return JsonResponse({
+            'total_items': cart.total_items,
+            'subtotal': float(cart.subtotal)
+        })
+
+
+class ClearCartView(CartMixin, View):
+    def post(self, request):
+        cart = self.get_cart(request)
