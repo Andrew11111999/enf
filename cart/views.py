@@ -172,3 +172,29 @@ class CartCountView(CartMixin, View):
 class ClearCartView(CartMixin, View):
     def post(self, request):
         cart = self.get_cart(request)
+        cart.clear()
+
+        request.session['cart_id'] = cart.id
+        request.session.modified = True
+
+        if request.headers.get('HX-Request'):
+            return TemplateResponse(request, 'cart/cart_empty.html', {
+                'cart': cart
+            })
+        return JsonResponse({
+            'succes': True,
+            'message': 'Cart cleared'
+        })
+
+
+class CartSummaryView(CartMixin, View):
+    def get(self, request):
+        cart = self.get_cart(request)
+        context = {
+            'cart': cart,
+            'cart_items': cart.items.select_related(
+                'product',
+                'product_size__size'
+            ).order_by('-added_at')
+        }
+        return TemplateResponse(request, 'cart/cart_summary.html', context)
