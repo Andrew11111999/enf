@@ -14,7 +14,7 @@ from pathlib import Path
 import os
 
 from django.conf.global_settings import STATIC_ROOT, MEDIA_URL, MEDIA_ROOT, SESSION_COOKIE_AGE, \
-    SESSION_SAVE_EVERY_REQUEST
+    SESSION_SAVE_EVERY_REQUEST, AUTH_USER_MODEL
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -139,5 +139,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-SESSION_COOKIE_AGE = 86400 # 30 day
+SESSION_COOKIE_AGE = 86400  # 30 day
 SESSION_SAVE_EVERY_REQUEST = True
+
+AUTH_USER_MODEL = 'users.CustomUser'
