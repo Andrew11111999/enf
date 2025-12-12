@@ -11,7 +11,6 @@ from django.contrib import messages
 from main.models import Product
 
 
-
 def register(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
