@@ -22,5 +22,22 @@ class CustomUserAdmin(UserAdmin):
         }),
         ('Important dates', {
             'fields': ('last_login', 'date_joined')
-        })
+        }),
     )
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('email', 'first_name', 'last_name', 'password1',
+                       'password2', 'is_staff', 'is_active'),
+        }),
+    )
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if 'username' in form.base_fields:
+            form.base_fields['username'].disabled = True
+
+        return form
+
+
+admin.site.register(CustomUser, CustomUserAdmin)
