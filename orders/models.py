@@ -13,6 +13,7 @@ class Order(models.Model):
     )
     PAYMENT_PROVIDER_CHOICES = (
         ('stripe', 'Stripe'),
+        ('heleket', 'Heleket'),
     )
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
@@ -36,3 +37,20 @@ class Order(models.Model):
     heleket_payment_id = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Order {self.id} by {self.email}"
+
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    size = models.ForeignKey(ProductSize, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.product.name} - {self.size.size.name} ({self.quantity})"
+
+    def get_total_price(self):
+        return self.price * self.quantity
