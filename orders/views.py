@@ -67,3 +67,28 @@ class CheckoutView(CartMixin, View):
             if request.headers.get('HX-Request'):
                 return TemplateResponse(request, 'orders/checkout_content.html', context)
             return render(request, 'orders/checkout.html', context)
+
+        total_price = cart.subtotal
+        form_data = request.POST.copy()
+        if not form_data.get('email'):
+            form_data['email'] = request.user.email
+        form = OrderForm(form_data, user=request.user)
+
+        if form.is_valid():
+            order = Order.objects.create(
+                user=request.user,
+                first_name=form.cleaned_data['first_name'],
+                last_name=form.cleaned_data['last_name'],
+                email=form.cleaned_data['email'],
+                company=form.cleaned_data['company'],
+                address1=form.cleaned_data['address1'],
+                address2=form.cleaned_data['address2'],
+                city=form.cleaned_data['city'],
+                country=form.cleaned_data['country'],
+                province=form.cleaned_data['province'],
+                postal_code=form.cleaned_data['postal_code'],
+                phone=form.cleaned_data['phone'],
+                special_instructions='',
+                total_price=total_price,
+                payment_provider=payment_provider,
+            )
