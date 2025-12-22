@@ -21,6 +21,7 @@ import base64
 stripe.api_key = settings.STRIPE_SECRET_KEY
 stripe_endpoint_secret = settings.STRIPE_WEBHOOK_KEY
 
+
 def create_stripe_checkout_session(order, request):
     cart = CartMixin.get_cart(request)
     line_items = []
@@ -43,5 +44,13 @@ def create_stripe_checkout_session(order, request):
             mode='payment',
             success_url=request.build_absolute_uri('/payment/stripe/success/') + '?session_id={CHECKOUT_SESSION_ID}',
             cancel_url=request.build_absolute_uri('/payment/stripe/cancel/') + f'order_id={order.id}',
-
+            metadata={
+                'order_id': order.id
+            }
         )
+        order.stripe_payment_intent_id = checkout_session.payment_intent
+        order.payment_provider = 'stripe'
+        order.save()
+        return checkout_session
+    except Exception as e:
+        raise
