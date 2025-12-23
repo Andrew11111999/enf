@@ -11,6 +11,7 @@ from cart.views import CartMixin
 from cart.models import Cart
 from main.models import ProductSize
 from django.shortcuts import get_object_or_404
+from payment.views import create_stripe_checkout_session, create_heleket_payment
 from decimal import Decimal
 import logging
 
@@ -92,3 +93,59 @@ class CheckoutView(CartMixin, View):
                 total_price=total_price,
                 payment_provider=payment_provider,
             )
+
+            for item in cart.items.select_related('product', 'product_size'):
+                logger.debug(f"Processing cart item: product={item.product.name}, size={item.product_size.size.name}, quantity={item.quantity}")
+                OrderItem.objects.create(
+                    order=order,
+                    product=item.product,
+                    size=item.product_size,
+                    quantity=item.quantity,
+                    price=item.product.price or Decimal('0.00')
+                )
+
+            try:
+                logger.info(f"Creating payment session for provider: {payment_provider}")
+                if payment_provider == 'stripe':
+                    logger.debug("Creating Stripe checkout session")
+                    checkout_session = create_stripe_checkout_session(order, request)
+                    cart.clear()
+                    if request.headers.get('HX-Request'):
+                        response = HttpResponse(status=200)
+                        response['HX-Redirect'] = checkout_session.url
+                        logger.info(f"HX-Redirect to Stripe: {checkout_session.url}")
+                        return response
+                    return redirect(checkout_session.url)
+                elif payment_provider == 'heleket':
+                    payment = create_heleket_payment(order, request)
+                    cart.clear()
+                    if request.headers.get('HX-Request'):
+                        response = HttpResponse(status=200)
+                        response['HX-Redirect'] = payment['url']
+                        return response
+                    return redirect(payment['url'])
+            except Exception as e:
+                logger.error(f"Error creating payment: {str(e)}", exc_info=True)
+                order.delete()
+                context = {
+                    'form': form,
+                    'cart': cart,
+                    'cart_items': cart.items.select_related('product', 'product_size__size').order_by('-added_at'),
+                    'total_price': total_price,
+                    'error_message': f'Payment processing error: {str(e)}',
+                }
+                if request.headers.get('HX-Request'):
+                    return TemplateResponse(request, 'orders/checkout_content.html', context)
+                return render(request, 'orders/checkout.html', context)
+        else:
+            logger.warning(f"Form validation error: {form.errors}")
+            context = {
+                'form': form,
+                'cart': cart,
+                'cart_items': cart.items.select_related('product', 'product_size__size').order_by('-added_at'),
+                'total_price': total_price,
+                'error_message': 'Please correct the errors in the form.',
+            }
+            if request.headers.get('HX-Request'):
+                return TemplateResponse(request, 'orders/checkout_content.html', context)
+            return render(request, 'orders/checkout.html', context)
