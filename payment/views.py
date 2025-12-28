@@ -17,9 +17,6 @@ import base64
 # stripe login
 # stripe listen --forward-to localhost:8000/payment/stripe/webhook/
 
-HELEKET_API_KEY = settings.HELEKET_API_KEY
-HELEKET_BASE_URL = 'https://api.heleket.com/v1'
-HELEKET_SECRET_KEY = settings.HELEKET_SECRET_KEY
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 stripe_endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
