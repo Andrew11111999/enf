@@ -18,6 +18,7 @@ import base64
 # stripe listen --forward-to localhost:8000/payment/stripe/webhook/
 
 
+
 stripe.api_key = settings.STRIPE_SECRET_KEY
 stripe_endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
 
