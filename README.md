@@ -10,7 +10,7 @@ Docker-контейнеризация с PostgreSQL
 Установите зависимости:
 python -m pip install -r requirements.txt
 Создайте и активируйте виртуальное окружение:
-python -m venv venv
+python -m venv venv        
 source venv/bin/activate  # Linux/Mac
 venv\Scripts\activate    # Windows
 Настройте переменные окружения:
