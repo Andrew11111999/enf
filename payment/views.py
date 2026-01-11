@@ -118,7 +118,7 @@ def stripe_cancel(request):
             return TemplateResponse(request, 'payment/stripe_cancel_content.html', context)
         return render(request, 'payment/stripe_cancel.html', context)
     return redirect('orders:checkout')
-
+# мэйби лвфарцфулыоапцугалпцугл
 
 def create_heleket_payment(order, request):
     cart = CartMixin().get_cart(request)
