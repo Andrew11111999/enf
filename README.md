@@ -74,3 +74,26 @@ DATABASES = {
 # Платежные системы
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
 HELEKET_API_KEY = os.getenv('HELEKET_API_KEY')
+
+📐 ERD и скриншоты
+- Поместите диаграмму ERD в `docs/erd.png` и скриншоты UI в `docs/screenshots/`.
+- Пример встраивания в README:
+  - ERD: `![ERD](docs/erd.png)`
+  - Скриншот: `![Главная](docs/screenshots/home.png)`
+
+🧹 Линтинг и код‑стайл
+- Используется Ruff. Запуск локально:
+
+```bash
+ruff check .
+```
+
+🧪 Тесты
+- Минимальные Django‑тесты добавлены. Запуск:
+
+```bash
+python manage.py test --verbosity 2
+```
+
+🤖 CI
+- GitHub Actions запускает Ruff и Django‑тесты на PR/пушах (`.github/workflows/ci.yml`).
