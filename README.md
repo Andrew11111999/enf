@@ -110,7 +110,3 @@ DATABASES = {
 # Платежные системы
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
 HELEKET_API_KEY = os.getenv('HELEKET_API_KEY')
-```
-
-## 🛠 Гайд на деплой
-[https://github.com/s6ptember/for-deploy-guide.git]
