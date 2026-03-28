@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, chore/** ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  checks-and-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Ruff lint
+        run: |
+          ruff --version
+          ruff check . || true
+
+      - name: Django system checks
+        env:
+          SECRET_KEY: temp
+          DEBUG: '1'
+          USE_SQLITE_FOR_CI: '1'
+        run: |
+          python manage.py check
+
+      - name: Run tests
+        env:
+          SECRET_KEY: temp
+          DEBUG: '1'
+          USE_SQLITE_FOR_CI: '1'
+        run: |
+          python manage.py test --verbosity 2
+
